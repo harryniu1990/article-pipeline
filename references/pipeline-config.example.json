@@ -1,0 +1,93 @@
+{
+  "_note": "article-pipeline 的固定配置。复制本文件为 pipeline-config.json 后填写，改这里，不要改脚本。",
+  "_how_to": {
+    "account": "larkswitch 里的飞书账号名（lark-cli --account 的值）",
+    "base.base_token": "多维表格 URL 里的 base/ 之后那一段，形如 XXXbihqjaKUFYsaAIwcytKQnXX",
+    "base.table_id": "数据表 id，形如 tblXXXXXXXXXXXXX（在表格 URL 的 table= 参数里）",
+    "topics": "用 base +record-list --table-id <tid> 拉出记录，把选题行对应的 record_id 填进来；行被增删后必须重新核对",
+    "yanxu.account_id": "用 mcp__yanxu__list_wechat_accounts 查已绑定公众号的 account_id",
+    "yanxu.theme_id": "用 mcp__yanxu__list_theme_styles 查可用主题",
+    "toutiao.*_url": "登录头条号后台后从地址栏复制（默认已填，通常不用改）",
+    "skills.*": "被编排的三个技能名，换成你自己的即可（需满足 references/platform-specs.md 的稿件格式）"
+  },
+
+  "account": "YOUR_FEISHU_ACCOUNT_NAME",
+
+  "base": {
+    "base_token": "YOUR_BASE_TOKEN",
+    "table_id": "YOUR_TABLE_ID",
+    "view_url": "https://your-tenant.feishu.cn/base/YOUR_BASE_TOKEN"
+  },
+
+  "fields": {
+    "topic": "选题",
+    "question_title": "疑问式标题",
+    "assertion_title": "断言式标题",
+    "status": "状态",
+    "archive_doc": "存档文档",
+    "article_link": "文章链接"
+  },
+
+  "status": {
+    "archived": "已写待发",
+    "published": "已发布"
+  },
+
+  "topics": {
+    "_note": "选题编号 → record_id。行被增删后需重新核对。",
+    "01": "rec_REPLACE_ME_01",
+    "02": "rec_REPLACE_ME_02",
+    "03": "rec_REPLACE_ME_03",
+    "04": "rec_REPLACE_ME_04",
+    "05": "rec_REPLACE_ME_05",
+    "06": "rec_REPLACE_ME_06",
+    "07": "rec_REPLACE_ME_07",
+    "08": "rec_REPLACE_ME_08",
+    "09": "rec_REPLACE_ME_09",
+    "10": "rec_REPLACE_ME_10"
+  },
+
+  "yanxu": {
+    "_note": "言序 = 公众号草稿箱通道。它自带排版引擎，不需要再套一层公众号排版技能。",
+    "account_name": "YOUR_WECHAT_ACCOUNT_NAME",
+    "account_id": "YOUR_WECHAT_ACCOUNT_ID",
+    "theme_id": "blackgold",
+    "theme_name": "曜金质感",
+    "theme_alternatives": [
+      {"theme_id": "magma", "name": "赤焰警示", "when": "热点评论、争议快评、燃向话题"},
+      {"theme_id": "cobalt", "name": "电光靛蓝", "when": "财报解读、行业数据、深度分析"},
+      {"theme_id": "neon", "name": "霓虹脉冲", "when": "AI / 大模型 / 前沿科技"}
+    ],
+    "cover_max_mb": 2.0,
+    "body_image_max_mb": 1.0
+  },
+
+  "toutiao": {
+    "account": "YOUR_TOUTIAO_ACCOUNT_NAME",
+    "home_url": "https://mp.toutiao.com/profile_v4/index",
+    "publish_url": "https://mp.toutiao.com/profile_v4/graphic/publish",
+    "articles_url": "https://mp.toutiao.com/profile_v4/graphic/articles",
+    "declare": "个人观点，仅供参考",
+    "title_max": 30,
+    "cover_inline_max_kb": 100
+  },
+
+  "cover": {
+    "aspect": "2.35:1",
+    "wechat_moments_safe_zone": "画面宽度 28.7% ~ 71.3%（朋友圈只保留正中央 1:1 方形）",
+    "main_text_max_width": "不超过画面总宽度的 30%"
+  },
+
+  "skills": {
+    "_note": "被编排的技能名（可替换插槽）",
+    "writer": "toutiao-wealth-mindset-writer",
+    "cover": "article-theme-cover",
+    "archive": "article-feishu-archive"
+  },
+
+  "paths": {
+    "dist": "dist",
+    "covers": "covers",
+    "logs": ".pipeline"
+  }
+}

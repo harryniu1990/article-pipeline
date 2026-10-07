@@ -1,0 +1,16 @@
+# ---- 你的私人配置（含飞书表格 token / 账号，切勿提交）----
+references/pipeline-config.json
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# ---- 流水线运行产物 ----
+dist/
+.pipeline/
+covers/
+article_*.md
+
+# ---- macOS ----
+.DS_Store
