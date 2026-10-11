@@ -173,17 +173,23 @@ $PY $SKILL/scripts/render_platforms.py --article ./article_xxx.md --only yanxu -
 
 ```bash
 export BSK_AUTO_START=0
+# 一次生成标题 / 正文 / 封面三条注入表达式，省得每次现场拼 shell 转义
+$PY $SKILL/scripts/mk_toutiao_js.py --title "<标题>" --cover covers/xxx.jpg
 ```
 
 1. `session start` → 逐个实例 `navigate`，**用 url 是否被重定向到 `/auth/page/login` 判断登录态**
 2. 进 `https://mp.toutiao.com/profile_v4/graphic/publish`
-3. 填标题（`textarea[placeholder*="请输入文章标题"]`）
-4. **正文用 `evaluate` 注入 ClipboardEvent**（`bsk fill` 对 ProseMirror 必失败）
-5. **封面用 base64 页面内自建 File 注入**（先 `sips` 压到 <100KB）
-6. 勾选「个人观点，仅供参考」
+3. 填标题 —— `bsk evaluate --session <sid> "$(cat <outdir>/title.js)"`
+4. 注入正文 —— `bsk evaluate --session <sid> "$(cat <outdir>/body.js)"`
+   （`bsk fill` 对 ProseMirror 必失败，只能注入 ClipboardEvent）
+5. **先点 `.article-cover-add` 打开面板**，再注入封面 —— `"$(cat <outdir>/cover.js)"`
+   （封面先 `sips` 压到 <100KB；注入返回 `assigned:0` 是**假阴性**，以页面「已上传 N 张图片」为准）
+6. 点面板里的「确定」关掉 → 勾选「个人观点，仅供参考」
 7. 「预览并发布」→ **再点掉确认弹窗**（两层都点完才算成功）
-8. 抓 `https://www.toutiao.com/item/<id>/`
-9. `session stop`
+8. 抓 `https://www.toutiao.com/item/<pgc_id>/`
+   —— 列表页**默认「全部」筛选就能看到**刚发布的文章；
+   **审核中也能拼出 `/item/` 链接且实测可达（HTTP 200）**，不必等过审
+9. `session stop` → `bsk daemon stop`
 
 正文读 `dist/toutiao_body.txt`。⚠️ 判定封面成功以页面提示/缩略图为准，
 **不要回读 `input.files`**（头条处理后会清空它）。
@@ -224,6 +230,7 @@ $PY $SKILL/scripts/backfill_links.py --record <rid> \
 | `render_platforms.py` | 2 / 3 / 4 | 输入文件问题 / 解析失败（缺【正文】）/ 平台校验失败（含 HTML 标签等） |
 | `archive_article.py` | 2 / 3 / 4 / **5** | 环境 / 授权 / 建文档失败 / **文档已建但回填失败（严禁重跑）** |
 | `backfill_links.py` | 2 / 3 / 5 | 环境 / 授权 / 写入失败（**幂等，可重试**） |
+| `mk_toutiao_js.py` | 2 | 输入文件（正文 / 封面）缺失 |
 
 ---
 
