@@ -1,6 +1,6 @@
 ---
 name: article-pipeline
-description: 文章生产发布流水线总入口。把「选题 → 出稿 → 配图 → 飞书存档 → 公众号（言序草稿箱）→ 头条号 → 回填选题表」串成单入口编排，一次生成头条纯文本与言序 payload 两套格式，统一收口 larkswitch/bsk/designkit 的环境约束。当用户说「出选题 N」「走一遍文章流程」「把这篇发出去」「一稿多发」「发文章」「生成一篇并存档」「发布流水线」时使用。触发场景：出选题、写并发布、多平台分发、回填选题表格。
+description: 文章生产发布流水线总入口。把「选题 → 出稿 → 配图 → 飞书存档 → 公众号（言序草稿箱）→ 头条号 → 回填选题表」串成单入口编排，一次生成头条纯文本与言序 payload 两套格式，统一收口 larkswitch/bsk/内置配图 的环境约束。当用户说「出选题 N」「走一遍文章流程」「把这篇发出去」「一稿多发」「发文章」「生成一篇并存档」「发布流水线」时使用。触发场景：出选题、写并发布、多平台分发、回填选题表格。
 agent_created: true
 ---
 
@@ -40,7 +40,7 @@ $PY $SKILL/scripts/preflight.py --topic 04
 体检**只读、不发网络请求**。有 `error` 先修再跑；`warn` 视情况处理。
 体检会顺手列出 `dist/` 里的残留文件 —— 重跑前先确认那是不是上一轮遗留。
 
-`references/env-constraints.md` 里有全部固定调用姿势（lark-cli / bsk / designkit / 言序），
+`references/env-constraints.md` 里有全部固定调用姿势（lark-cli / bsk / 配图 / 言序），
 **遇到环境报错先查它，不要凭直觉改参数。**
 
 ---
@@ -67,15 +67,21 @@ $PY $SKILL/scripts/preflight.py --topic 04
 | 产物 | 由谁产 | 落到 |
 |---|---|---|
 | 正文 md | 技能 `toutiao-wealth-mindset-writer` | `<工作区>/article_<slug>.md` |
-| 2.35:1 头图 | 技能 `article-theme-cover` | `<工作区>/covers/公众号头图_<主题>_<hash>.jpg` |
+| 2.35:1 头图 | 技能 `article-theme-cover` | `<工作区>/covers/公众号头图_<主文案>.jpg` |
 
-出图后**目视复核两点**（历史踩坑）：
+出图分两步（**两段式**，别退回单次生成）：
 
-1. 主文案是否**水平居中**（曾经被竖排放在画面左侧，完全落在朋友圈安全区外）
-2. 主文案横向宽度是否 **≤ 40%**（1:1 裁切区实际宽度 = 42.9%，曾经做到 46% 被削字；
-   取 40% 留约 3 个百分点余量。`article-theme-cover/references/prompt-guide.md` 同口径）
+1. 内置 `ImageGen` 出**无文字背景**（调用前先告知用户：单张约 5–10 积分）
+2. `compose_cover.py` 本地叠加中文文案
 
-不合格就重生成，别将就。
+出图后**读脚本返回的 JSON 自检，不要靠肉眼**：
+
+- `warnings` 必须为空数组
+- `main_width_pct` ≤ 40（1:1 裁切区实际宽度 = 42.9%，曾经做到 46% 被削字）
+- `center_pct` ≈ 50（曾经被竖排放在画面左侧，完全落在安全区外）
+- `left_pct` / `right_pct` 落在 28.7 ~ 71.3
+
+不合格就调文案长度重跑，**背景可复用、不额外花积分**。
 
 ---
 
@@ -252,7 +258,7 @@ $PY $SKILL/scripts/backfill_links.py --record <rid> \
 |---|---|
 | `references/pipeline.md` | 9 步 → 5 阶段映射、决策点、断点续跑、平台子流程 |
 | `references/platform-specs.md` | 稿件格式约定 + 三平台硬约束 + 字数口径 |
-| `references/env-constraints.md` | lark-cli / bsk / designkit / 言序 的固定调用姿势与踩坑 |
+| `references/env-constraints.md` | lark-cli / bsk / 配图（内置出图 + 本地合成）/ 言序 的固定调用姿势与踩坑 |
 | `references/pipeline-config.json` | 表格 token、字段名、topic→record_id、绑定的公众号与主题（仓库只带 `pipeline-config.example.json`，需自行复制填写） |
 
 ## 十三、配套技能（可替换插槽）

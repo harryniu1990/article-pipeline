@@ -35,7 +35,11 @@ LARK_CLI_CANDIDATES = [
     HOME / ".workbuddy/binaries/node/cli-connector-packages/bin/lark-cli",
 ]
 BSK = HOME / ".local/bin/bsk"
-DESIGNKIT = HOME / ".workbuddy/binaries/node/cli-connector-packages/bin/designkit"
+# 配图默认走「内置 ImageGen 出背景 + compose_cover.py 本地渲染中文文案」，
+# 不再依赖外部 CLI；designkit 仅作备选通道。
+COMPOSE = HOME / ".workbuddy/skills/article-theme-cover/scripts/compose_cover.py"
+CJK_FONT = Path("/System/Library/Fonts/PingFang.ttc")
+PILLOW_PY_CANDIDATES = ["/opt/homebrew/bin/python3", "/usr/local/bin/python3"]
 
 REQUIRED_CONFIG = [
     ("account", "飞书账号选择器"),
@@ -64,6 +68,15 @@ def probe_version(cmd: list[str], timeout: int = 20) -> str | None:
         return ((proc.stdout or "") + (proc.stderr or "")).strip().splitlines()[0][:80]
     except Exception:
         return None
+
+
+def has_pillow(exe: str, timeout: int = 25) -> bool:
+    """确认该解释器能 import PIL（封面文案渲染依赖 Pillow）。"""
+    try:
+        proc = subprocess.run([exe, "-c", "import PIL"], capture_output=True, timeout=timeout)
+        return proc.returncode == 0
+    except Exception:
+        return False
 
 
 def main() -> int:
@@ -108,12 +121,22 @@ def main() -> int:
         add("bsk", "warn", f"未找到 {BSK}",
             "头条自动发布将无法执行；可在浏览器里手工发布")
 
-    # --- 4. designkit（配图）---------------------------------------------
-    if DESIGNKIT.exists():
-        add("designkit", "ok", str(DESIGNKIT))
+    # --- 4. 配图能力（内置出图 + 本地合成）--------------------------------
+    py_img = next(
+        (c for c in PILLOW_PY_CANDIDATES if Path(c).exists() and has_pillow(c)),
+        None,
+    )
+    if not COMPOSE.exists():
+        add("配图合成", "warn", f"未找到 {COMPOSE}",
+            "封面文案无法本地渲染；可改用 article-theme-cover 的 designkit 备选通道")
+    elif not py_img:
+        add("配图合成", "warn", "找不到带 Pillow 的 python",
+            "装 Pillow，或用 /opt/homebrew/bin/python3 跑 compose_cover.py")
+    elif not CJK_FONT.exists():
+        add("配图合成", "warn", f"未找到中文字体 {CJK_FONT}",
+            "封面中文可能无法渲染")
     else:
-        add("designkit", "warn", f"未找到 {DESIGNKIT}",
-            "配图技能可能无法调用；可换用内置图片生成")
+        add("配图合成", "ok", f"内置出图 + {py_img}（Pillow / 中文字体就绪）")
 
     # --- 5. 配置 --------------------------------------------------------
     if not CONFIG_PATH.exists():

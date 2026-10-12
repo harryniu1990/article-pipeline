@@ -56,7 +56,7 @@ article-pipeline/
 ├── references/
 │   ├── pipeline.md                   # 9 步 → 5 阶段映射、决策点、断点续跑
 │   ├── platform-specs.md             # 稿件格式约定 + 三平台硬约束 + 字数口径
-│   ├── env-constraints.md            # lark-cli / bsk / designkit / 言序 的固定调用姿势
+│   ├── env-constraints.md            # lark-cli / bsk / 配图 / 言序 的固定调用姿势
 │   └── pipeline-config.example.json  # 配置模板（复制成 pipeline-config.json 再填）
 └── scripts/
     ├── preflight.py                  # 开跑前体检（只读、不发网络请求）
@@ -106,7 +106,7 @@ cp ~/.workbuddy/skills/article-pipeline/references/pipeline-config.example.json 
 | 槽位 | 默认值 | 职责 |
 |---|---|---|
 | `skills.writer` | `toutiao-wealth-mindset-writer` | 出稿（需产出 `platform-specs.md` 约定的稿件结构） |
-| `skills.cover` | `article-theme-cover` | 出 2.35:1 头图 |
+| `skills.cover` | `article-theme-cover` | 出 2.35:1 头图（内置出图 + 该技能的 `scripts/compose_cover.py` 本地叠中文） |
 | `skills.archive` | `article-feishu-archive` | 飞书存档 + 表格回填 |
 
 这三个是**插槽**，换成你自己的即可 —— 只要稿件结构符合 `references/platform-specs.md`。
@@ -117,7 +117,7 @@ cp ~/.workbuddy/skills/article-pipeline/references/pipeline-config.example.json 
 |---|---|---|
 | `lark-cli`（larkswitch 托管版） | 飞书多维表格 / 云文档 | 阶段 C、E 不可用 |
 | `bsk`（BrowserSkill） | 浏览器自动化发头条 | 阶段 D-2 需手工发 |
-| `designkit`（美图设计室） | 配图 | 配图换用内置出图 |
+| 内置出图（`ImageGen`）+ `compose_cover.py` | 配图：生成背景 + 本地叠字 | 可退回 `designkit` 备选通道 |
 
 ### MCP
 

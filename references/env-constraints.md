@@ -161,26 +161,39 @@ input.dispatchEvent(new Event('change', {bubbles: true}));
 
 ---
 
-## 3. designkit（美图设计室，配图）
+## 3. 配图（内置出图 + 本地合成）
 
-命令行连接器，**不是 MCP**：
+**默认路径**：内置 `ImageGen` 出**无文字背景** → `compose_cover.py` 本地渲染中文文案。
+不依赖外部 CLI 或额度，中文 100% 准确，宽度可量化校验。
 
+```bash
+# 1) ImageGen（ToolSearch → DeferExecuteTool）：出无文字背景，size=2016x864，quality=high
+#    提示词必须强调「中央留大片低对比度深色空白区」+「禁止任何文字/水印/logo」
+# 2) 本地叠字
+PY_IMG=/opt/homebrew/bin/python3   # 必须用这个（含 Pillow；managed 版没装）
+$PY_IMG ~/.workbuddy/skills/article-theme-cover/scripts/compose_cover.py \
+  --bg "covers/bg/<背景图>" --main "<主文案>" --outdir ./covers
 ```
-~/.workbuddy/binaries/node/cli-connector-packages/bin/designkit
-```
 
-流程：
+判据：`warnings` 为空、`main_width_pct ≤ 40`、`center_pct ≈ 50`、
+`left_pct/right_pct` 落在 28.7~71.3、`size_kb ≤ 2048`。
+
+⚠️ **为什么必须两段式**：单次生成时模型把主文案排到 **54.6% 画面宽**（越出 1:1 安全区，
+朋友圈裁切会削字），且右下角会带 `AI生成 / WORKBUDDY` 水印。别退回单次生成。
+
+### 备选：designkit（美图设计室，需授权 + 按次额度）
+
+命令行连接器，**不是 MCP**：`~/.workbuddy/binaries/node/cli-connector-packages/bin/designkit`
 
 ```
 auth status --check          # 先确认已授权
-create-room                  # 建房间
-chat                         # 提交生图请求
-history-detail --watch       # 前台阻塞等待（这一步必须前台）
+create-room / chat           # 建房间、提交需求
+history-detail --watch       # 前台阻塞等待（必须前台，别放后台）
 download                     # 取回图片
 ```
 
-`--watch` 会阻塞，别放后台。取图时要对比 `before = set(os.listdir(dir))`，
-只回报**本次新增**的文件，避免把历史图当成本次产物。
+`recharge_required` = 额度用尽，**充值后用 `designkit resume` 接着原任务跑**（重提会重复扣费）。
+取图时对比 `before = set(os.listdir(dir))`，只回报本次新增文件，避免把历史图当成本次产物。
 
 ---
 
