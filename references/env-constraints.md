@@ -154,10 +154,44 @@ input.dispatchEvent(new Event('change', {bubbles: true}));
 | 封面上传 input | `.btn-upload-handle input[type=file]` |
 | 封面区 | `.article-cover` / `.article-cover-add` |
 
+**④ 页面复选框清单** —— `.byte-checkbox` 的**顺序是固定的**，可直接按下标定位
+（但勾选仍必须用真实鼠标事件，见下）：
+
+| idx | 文案 | 默认 |
+|---|---|---|
+| 0 | 头条首发 | **checked** |
+| 1 | （空） | unchecked |
+| 2 | 允许赞赏（今日还有5次机会） | checked |
+| 3 | 发布得更多收益 | checked |
+| 4 | 取材网络 | unchecked |
+| 5 | 引用站内 | unchecked |
+| 6 | **个人观点，仅供参考** | unchecked ← 要勾的 |
+| 7 | 引用AI | unchecked |
+| 8 | 虚构演绎，故事经历 | unchecked |
+| 9 | 投资观点，仅供参考 | unchecked |
+| 10 | 健康医疗分享，仅供参考 | unchecked |
+
+拿不准下标就按文案取：`[...document.querySelectorAll('.byte-checkbox')].find(c => c.innerText.trim() === '个人观点，仅供参考')`。
+
+> 「头条首发」默认勾选，要求 **72 小时内仅在头条发布** —— 与"同时发公众号"存在规则冲突。
+> 默认沿用不改，但**每次小结里必须向用户明示**。
+
 ### 2.5 发布是两层确认
 
 点「预览并发布」之后还有一层确认弹窗，必须点掉。**两个都点完才算发布成功**，
-之后从作品列表抓 `https://www.toutiao.com/item/<id>/` 形式的文章链接。
+之后从作品列表抓文章链接。
+
+⚠️ **链接形态会变（2026-10 实测）**：`/item/<pgc_id>/` 不再直接 200，而是
+
+```
+https://www.toutiao.com/item/<pgc_id>/    → 301
+https://www.toutiao.com/i<pgc_id>/        → 301
+https://www.toutiao.com/article/<pgc_id>/ → 200  ← 最终落地
+```
+
+**回填用 `/item/` 前必须 `curl -L` 看最终地址**；最稳是直接拼
+`https://www.toutiao.com/article/<pgc_id>/`。刚发布首轮可能 404，
+**重试 + `-L` 一起用**。
 
 ---
 
@@ -213,6 +247,14 @@ curl -X POST -F "file=@covers/xxx.jpg" "<upload_url>"
 ```
 
 - **没有 update 接口**：建稿后要改只能重建，旧稿会留在后台
+
+⚠️ **`cover_img` 不接受本机路径** —— 工具描述写着「URL 或本地静态路径」是**误导**，
+实测传 `/Users/...` 会报 `ret 52001 图片不存在或无法读取：…勿直接使用本机路径（如 C:/、D:/、/Users/）`。
+而且 **`create_article` 本身不校验封面**，错误会延迟到 `publish_article` 才暴露 ——
+等报错再补就必须**重新 create 一篇**（旧稿留在后台）。
+**所以顺序必须锁死：先上传拿直链 → 再 create → 再 publish。**
+
+- 上传返回的是**重压缩副本**（实测 2016×858 / 98.6KB → 1280×545 / 28.5KB），比例保持不变，可放心用
 
 ---
 

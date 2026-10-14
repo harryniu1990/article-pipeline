@@ -175,6 +175,11 @@ $PY $SKILL/scripts/render_platforms.py --article ./article_xxx.md --only yanxu -
 
 **言序没有 update 接口** —— 建稿后发现错只能重建。所以阶段 B 的校验必须在前。
 
+> ⚠️ **`cover_img` 只认公网直链，传本机绝对路径（`/Users/...`、`C:/`、`D:/`）必被拒**
+> （报 `ret 52001 图片不存在或无法读取`）。而且 `create_article` **不校验封面可读性**，
+> 错误会拖到 `publish_article` 才报 —— 那时只能**重新 create 一篇**（言序没有 update）。
+> **顺序锁死：先上传拿直链 → 再 create → 再 publish。**
+
 ### D-2 头条号
 
 ```bash
@@ -192,9 +197,12 @@ $PY $SKILL/scripts/mk_toutiao_js.py --title "<标题>" --cover covers/xxx.jpg
    （封面先 `sips` 压到 <100KB；注入返回 `assigned:0` 是**假阴性**，以页面「已上传 N 张图片」为准）
 6. 点面板里的「确定」关掉 → 勾选「个人观点，仅供参考」
 7. 「预览并发布」→ **再点掉确认弹窗**（两层都点完才算成功）
-8. 抓 `https://www.toutiao.com/item/<pgc_id>/`
-   —— 列表页**默认「全部」筛选就能看到**刚发布的文章；
-   **审核中也能拼出 `/item/` 链接且实测可达（HTTP 200）**，不必等过审
+8. 抓文章链接 —— 列表页**默认「全部」筛选就能看到**刚发布的文章，`pgc_id` 从
+   `href` 里的 `pgc_id=` 取
+   ⚠️ **`/item/<pgc_id>/` 会 301 中转**（2026-10 实测：`/item/` → `/i<id>/` →
+   `/article/<id>/` 才是 200）。**别只看 `/item/` 的状态码**，用 `curl -L` 看最终地址，
+   或直接写 `https://www.toutiao.com/article/<pgc_id>/`
+   —— 刚发布首轮可能 404，**重试 + `-L` 一起用**，别把 404 当失败
 9. `session stop` → `bsk daemon stop`
 
 正文读 `dist/toutiao_body.txt`。⚠️ 判定封面成功以页面提示/缩略图为准，
